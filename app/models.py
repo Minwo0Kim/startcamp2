@@ -22,5 +22,5 @@ class Post(Base):
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     password = Column(String(100), nullable=False)
-    route_id = Column(Integer, ForeignKey("routes.id"), nullable=True) #routes 테이블의 id 참조
+    route_id = Column(Integer, nullable = True)#ForeignKey("routes.id"), nullable=True) #routes 테이블의 id 참조
     created_at = Column(DateTime, server_default=func.current_timestamp(), nullable=False)

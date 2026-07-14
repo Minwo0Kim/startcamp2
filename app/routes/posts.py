@@ -1,11 +1,27 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
+
+from ..database import SessionLocal
+from ..models import Post
 
 posts_router = APIRouter(prefix = "/api/posts", tags = ["posts"])
 
+#post 생성 요청 시 request body
+class C_Post(BaseModel):
+    title : str
+    content : str
+    password : str
+    route_id : int | None = None
+
+class U_Post(BaseModel):
+    title : str
+    content : str
+    password : str
+
 #후기/게시글 작성
 @posts_router.post("")
-def create_post():
-    return {"message": "작성 완료"}
+async def create_post(post : C_Post):
+    return {"message": post.title}
 
 #전체 게시글 목록 조회
 @posts_router.get("")
