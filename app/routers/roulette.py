@@ -141,7 +141,12 @@ def _get_preferences(payload: RouletteGenerateRequest) -> tuple[str, str, int]:
     return wanted_place, food_category, duration_days
 
 
-@router.post("/generate", response_model=RouletteGenerateResponse)
+@router.post(
+    "/generate",
+    response_model=RouletteGenerateResponse,
+    summary="자연어 기반 랜덤 여행 경로 생성",
+    description="사용자의 자연어 프롬프트를 바탕으로 관광지와 음식점 경로를 자동 생성한다. OpenAI 연동 전에는 키워드 힌트와 랜덤 가중치로 동작한다.",
+)
 def generate_route(payload: RouletteGenerateRequest, db: Session = Depends(get_db)):
     wanted_place, food_category, duration_days = _get_preferences(payload)
     spot_count, restaurant_count = _choose_route_counts(duration_days)
