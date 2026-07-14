@@ -3,9 +3,11 @@ from fastapi import FastAPI
 
 from .database import engine
 from .models import Base
+from .routers.roulette import router as roulette_router
 
 
 app = FastAPI()
+app.include_router(roulette_router)
 
 
 @app.on_event("startup")
