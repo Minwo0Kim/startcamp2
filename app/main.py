@@ -1,6 +1,6 @@
 # backend/app/main.py
 from fastapi import FastAPI, APIRouter
-from routes.posts import posts_router
+from app.routes.posts import posts_router
 
 from .database import engine
 from .models import Base
