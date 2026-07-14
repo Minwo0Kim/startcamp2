@@ -26,6 +26,9 @@ CONTENT_TYPE_LABELS = {
 
 NEAREST_K = 10
 
+# 같은 타입이 3번 연속되는 것은 막는다.
+MAX_CONSECUTIVE_SAME_TYPE = 2
+
 # stop_count를 지정하지 않았을 때 무작위로 고르는 범위.
 MIN_STOPS = 4
 MAX_STOPS = 8
@@ -63,6 +66,10 @@ def _distance_km(a: tuple[float, float], b: tuple[float, float]) -> float:
     return math.hypot(dx, dy)
 
 
+def _place_type(place: Place) -> str:
+    return CONTENT_TYPE_LABELS.get(place.contenttypeid, "기타")
+
+
 def _load_places(db: Session) -> tuple[list[Place], dict[int, tuple[float, float]]]:
     places: list[Place] = []
     points: dict[int, tuple[float, float]] = {}
@@ -90,6 +97,8 @@ def _walk_nearest(
     current = random.choice(places)
     route = [current]
     visited = {current.id}
+    current_type = _place_type(current)
+    consecutive_same_type = 1
 
     while len(route) < stop_count:
         candidates = [place for place in places if place.id not in visited]
@@ -99,9 +108,37 @@ def _walk_nearest(
         origin = points[current.id]
         candidates.sort(key=lambda place: _distance_km(origin, points[place.id]))
 
-        current = random.choice(candidates[:NEAREST_K])
+        remaining_slots = stop_count - len(route)
+
+        def is_valid_next(place: Place) -> bool:
+            next_type = _place_type(place)
+
+            if consecutive_same_type >= MAX_CONSECUTIVE_SAME_TYPE and next_type == current_type:
+                return False
+
+            if remaining_slots == 1 and next_type == current_type:
+                return False
+
+            return True
+
+        nearest_window = candidates[:NEAREST_K]
+        valid_candidates = [place for place in nearest_window if is_valid_next(place)]
+
+        if not valid_candidates:
+            valid_candidates = [place for place in candidates if is_valid_next(place)]
+
+        if not valid_candidates:
+            break
+
+        current = random.choice(valid_candidates)
         route.append(current)
         visited.add(current.id)
+        next_type = _place_type(current)
+        if next_type == current_type:
+            consecutive_same_type += 1
+        else:
+            current_type = next_type
+            consecutive_same_type = 1
 
     return route
 
@@ -127,7 +164,7 @@ def _build_route_items(route: list[Place]) -> list[RouteItem]:
     summary="랜덤 여행 경로 생성",
     description=(
         "랜덤한 지점에서 출발해 인접한 장소를 이어 붙여 경로를 만든다. "
-        "매번 가장 가까운 10곳 중 하나를 무작위로 골라 이동한다. "
+        "매번 가장 가까운 10곳 중 하나를 무작위로 고르되, 같은 타입이 3번 연속되지 않도록 한다. "
         "stop_count를 생략하면 4~8곳 중 랜덤으로 정한다."
     ),
 )
