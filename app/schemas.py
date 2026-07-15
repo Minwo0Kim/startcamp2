@@ -5,15 +5,15 @@ from datetime import datetime
 class RouletteGenerateRequest(BaseModel):
     stop_count: int | None = Field(
         default=None,
-        ge=2,
-        le=20,
-        description="경로에 포함할 장소 수. 생략하거나 null이면 4~8 중 랜덤으로 정한다.",
+        ge=3,
+        le=8,
+        description="경로에 포함할 장소 수. 생략하거나 null이면 3~8 중 랜덤으로 정한다.",
     )
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"stop_count": 5},
+                {"stop_count": 3},
                 {"stop_count": None},
             ]
         }
@@ -54,6 +54,43 @@ class RouletteGenerateResponse(BaseModel):
             ]
         }
     )
+
+class RouletteSaveRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255, description="저장할 경로 제목")
+    password: str = Field(..., min_length=1, max_length=100, description="경로 불러오기용 비밀번호")
+    route_items: list[RouteItem] = Field(..., min_length=1, description="생성된 경로 항목 목록")
+
+
+class RouletteSaveResponse(BaseModel):
+    status: str
+    route_id: int
+    message: str
+
+
+class RouletteRouteListItem(BaseModel):
+    route_id: int
+    title: str
+    created_at: str
+
+
+class RouletteRouteListResponse(BaseModel):
+    items: list[RouletteRouteListItem]
+    page: int
+    page_size: int
+    total_count: int
+    total_pages: int
+    has_next: bool
+
+
+class RouletteLoadRequest(BaseModel):
+    route_id: int = Field(..., ge=1, description="불러올 저장 경로 ID")
+    password: str = Field(..., min_length=1, max_length=100, description="저장 시 설정한 비밀번호")
+
+
+class RouletteLoadResponse(BaseModel):
+    route_id: int
+    title: str
+    route_items: list[RouteItem]
 
 #post.py의 schema
 ##post 생성 요청 시 request body
