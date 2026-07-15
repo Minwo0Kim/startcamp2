@@ -10,6 +10,8 @@ DATA_DIR = BASE_DIR / "data"
 DATA_FILES = [
     DATA_DIR / "gwangju_spot.json",
     DATA_DIR / "gwangju_restaurant.json",
+    DATA_DIR / "gwangju_culture.json",
+    DATA_DIR / "gwangju_sports.json",
 ]
 
 
