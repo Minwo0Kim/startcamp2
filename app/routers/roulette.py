@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from ..models import Place, Route
 from ..schemas import (
+    RouletteLoadRequest,
+    RouletteLoadResponse,
     RouletteGenerateRequest,
     RouletteGenerateResponse,
     RouletteRouteListItem,
@@ -230,6 +232,37 @@ def list_routes(
         )
         for route in routes
     ]
+
+
+@router.post(
+    "/load",
+    response_model=RouletteLoadResponse,
+    summary="저장된 경로 상세 조회",
+    description="route_id와 비밀번호를 확인한 뒤 지도 복원용 경로 항목을 반환한다.",
+)
+def load_route(
+    payload: RouletteLoadRequest,
+    db: Session = Depends(get_db),
+):
+    route = db.query(Route).filter(Route.id == payload.route_id).first()
+    if route is None:
+        raise HTTPException(status_code=404, detail="해당 경로를 찾을 수 없습니다.")
+
+    if route.password != payload.password:
+        raise HTTPException(status_code=401, detail="비밀번호가 일치하지 않습니다.")
+
+    try:
+        route_items_data = json.loads(route.route_json)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="저장된 경로 데이터를 불러올 수 없습니다.")
+
+    route_items = [RouteItem(**item) for item in route_items_data]
+
+    return RouletteLoadResponse(
+        route_id=route.id,
+        title=route.title,
+        route_items=route_items,
+    )
 
 
 @router.post(

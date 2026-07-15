@@ -72,3 +72,14 @@ class RouletteRouteListItem(BaseModel):
     route_id: int
     title: str
     created_at: str
+
+
+class RouletteLoadRequest(BaseModel):
+    route_id: int = Field(..., ge=1, description="불러올 저장 경로 ID")
+    password: str = Field(..., min_length=1, max_length=100, description="저장 시 설정한 비밀번호")
+
+
+class RouletteLoadResponse(BaseModel):
+    route_id: int
+    title: str
+    route_items: list[RouteItem]
