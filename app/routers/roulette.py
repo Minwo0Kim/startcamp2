@@ -1,12 +1,19 @@
 import math
 import random
+import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
-from ..models import Place
-from ..schemas import RouletteGenerateRequest, RouletteGenerateResponse, RouteItem
+from ..models import Place, Route
+from ..schemas import (
+    RouletteGenerateRequest,
+    RouletteGenerateResponse,
+    RouletteSaveRequest,
+    RouletteSaveResponse,
+    RouteItem,
+)
 
 
 router = APIRouter(prefix="/api/roulette", tags=["roulette"])
@@ -166,6 +173,41 @@ def _build_route_items(route: list[Place]) -> list[RouteItem]:
         )
         for sequence, place in enumerate(route, start=1)
     ]
+
+
+@router.post(
+    "/save",
+    response_model=RouletteSaveResponse,
+    summary="랜덤 경로 저장",
+    description="생성된 경로와 제목, 비밀번호를 저장한다.",
+)
+def save_route(
+    payload: RouletteSaveRequest,
+    db: Session = Depends(get_db),
+):
+    if not payload.route_items:
+        raise HTTPException(status_code=400, detail="저장할 경로 항목이 없습니다.")
+
+    ordered_route_items = sorted(payload.route_items, key=lambda item: item.sequence)
+    route_json = json.dumps(
+        [item.model_dump() for item in ordered_route_items],
+        ensure_ascii=False,
+    )
+
+    route = Route(
+        title=payload.title,
+        password=payload.password,
+        route_json=route_json,
+    )
+    db.add(route)
+    db.commit()
+    db.refresh(route)
+
+    return RouletteSaveResponse(
+        status="success",
+        route_id=route.id,
+        message="경로 데이터가 성공적으로 저장되었습니다.",
+    )
 
 
 @router.post(

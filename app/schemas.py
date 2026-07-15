@@ -54,3 +54,15 @@ class RouletteGenerateResponse(BaseModel):
             ]
         }
     )
+
+
+class RouletteSaveRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255, description="저장할 경로 제목")
+    password: str = Field(..., min_length=1, max_length=100, description="경로 불러오기용 비밀번호")
+    route_items: list[RouteItem] = Field(..., min_length=1, description="생성된 경로 항목 목록")
+
+
+class RouletteSaveResponse(BaseModel):
+    status: str
+    route_id: int
+    message: str
