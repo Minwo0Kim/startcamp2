@@ -5,15 +5,15 @@ from pydantic.config import ConfigDict
 class RouletteGenerateRequest(BaseModel):
     stop_count: int | None = Field(
         default=None,
-        ge=2,
+        ge=3,
         le=20,
-        description="경로에 포함할 장소 수. 생략하거나 null이면 4~8 중 랜덤으로 정한다.",
+        description="경로에 포함할 장소 수. 생략하거나 null이면 3~8 중 랜덤으로 정한다.",
     )
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"stop_count": 5},
+                {"stop_count": 3},
                 {"stop_count": None},
             ]
         }

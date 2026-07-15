@@ -24,13 +24,21 @@ CONTENT_TYPE_LABELS = {
     "39": "음식점",
 }
 
+# 타입별로 허용할 최대 연속 등장 횟수.
+# 음식점은 연속 1회까지만, 나머지는 2회까지 허용한다.
+TYPE_CONSECUTIVE_LIMITS = {
+    "관광지": 2,
+    "문화시설": 2,
+    "레포츠": 2,
+    "음식점": 1,
+}
+
+DEFAULT_CONSECUTIVE_LIMIT = 2
+
 NEAREST_K = 10
 
-# 같은 타입이 3번 연속되는 것은 막는다.
-MAX_CONSECUTIVE_SAME_TYPE = 2
-
 # stop_count를 지정하지 않았을 때 무작위로 고르는 범위.
-MIN_STOPS = 4
+MIN_STOPS = 3
 MAX_STOPS = 8
 
 # 관광공사 원본에 좌표가 (117.99, 19.69)로 채워진 결측치가 섞여 있어 한반도 남부 밖은 제외한다.
@@ -68,6 +76,10 @@ def _distance_km(a: tuple[float, float], b: tuple[float, float]) -> float:
 
 def _place_type(place: Place) -> str:
     return CONTENT_TYPE_LABELS.get(place.contenttypeid, "기타")
+
+
+def _consecutive_limit(place_type: str) -> int:
+    return TYPE_CONSECUTIVE_LIMITS.get(place_type, DEFAULT_CONSECUTIVE_LIMIT)
 
 
 def _load_places(db: Session) -> tuple[list[Place], dict[int, tuple[float, float]]]:
@@ -112,11 +124,9 @@ def _walk_nearest(
 
         def is_valid_next(place: Place) -> bool:
             next_type = _place_type(place)
+            limit = _consecutive_limit(next_type)
 
-            if consecutive_same_type >= MAX_CONSECUTIVE_SAME_TYPE and next_type == current_type:
-                return False
-
-            if remaining_slots == 1 and next_type == current_type:
+            if next_type == current_type and consecutive_same_type >= limit:
                 return False
 
             return True
@@ -164,8 +174,8 @@ def _build_route_items(route: list[Place]) -> list[RouteItem]:
     summary="랜덤 여행 경로 생성",
     description=(
         "랜덤한 지점에서 출발해 인접한 장소를 이어 붙여 경로를 만든다. "
-        "매번 가장 가까운 10곳 중 하나를 무작위로 고르되, 같은 타입이 3번 연속되지 않도록 한다. "
-        "stop_count를 생략하면 4~8곳 중 랜덤으로 정한다."
+        "매번 가장 가까운 10곳 중 하나를 무작위로 고르되, 타입별 연속 제한을 적용한다. "
+        "stop_count를 생략하면 3~8곳 중 랜덤으로 정한다."
     ),
 )
 def generate_route(
