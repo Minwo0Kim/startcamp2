@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from ..database import SessionLocal
 from ..models import Post
-from ..schemas import C_Post, C_PostResponse, R_AllPostResponse, R_PostResponse, U_Post
+from ..schemas import C_Post, C_PostResponse, R_AllPostResponse, R_PostResponse, U_Post, D_Post
 
 posts_router = APIRouter(prefix = "/api/posts", tags = ["posts"])
 
@@ -57,7 +57,17 @@ def fix_post(post_id : int, mod_post : U_Post, db : Session = Depends(get_db)):
 
 #게시글 삭제
 @posts_router.delete("/{post_id}")
-def delete_post():
-    return {"message": "삭제기능"}
+async def delete_post(post_id : int, del_post : D_Post, db : Session = Depends(get_db)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if post is not None:
+        if post.password == del_post.password:
+            db.delete(post)
+            db.commit()
+            return {"message" : "삭제 완료"}
+        else :
+            return {"message" : "비밀번호 불일치로 인해 삭제 불가"}
+    else :
+        return HTTPException(status_code=404, detail = "이미 삭제되었거나, 존재하지 않는 게시물입니다.")
+    
 
 # 이건 커밋 안했는데 들어갈까?

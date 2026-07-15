@@ -87,3 +87,7 @@ class U_Post(BaseModel):
     title : str
     content : str
     password : str
+
+##post 삭제 요청 시 request body
+class D_Post(BaseModel):
+    password : str
