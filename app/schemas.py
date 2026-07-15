@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from pydantic.config import ConfigDict
-
+from datetime import datetime
 
 class RouletteGenerateRequest(BaseModel):
     stop_count: int | None = Field(
@@ -54,3 +54,36 @@ class RouletteGenerateResponse(BaseModel):
             ]
         }
     )
+
+#post.py의 schema
+##post 생성 요청 시 request body
+class C_Post(BaseModel):
+    title : str
+    content : str
+    password : str
+    route_id : int | None = None
+##post 생성 요청에 대한 response
+class C_PostResponse(BaseModel):
+    post_id : int
+    message : str
+
+##post 전체 불러오기 response
+class R_AllPostResponse(BaseModel):
+    post_id : int
+    title : int
+    route_id : int | None = None
+    created_at : str
+
+##post 상세 조회 response
+class R_PostResponse(BaseModel):
+    post_id : int
+    title : str
+    content : str
+    route_id : int | None = None 
+    created_at : datetime
+
+##post 수정 요청 시 request body
+class U_Post(BaseModel):
+    title : str
+    content : str
+    password : str
