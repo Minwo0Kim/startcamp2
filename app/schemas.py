@@ -66,3 +66,9 @@ class RouletteSaveResponse(BaseModel):
     status: str
     route_id: int
     message: str
+
+
+class RouletteRouteListItem(BaseModel):
+    route_id: int
+    title: str
+    created_at: str

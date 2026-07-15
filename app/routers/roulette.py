@@ -10,6 +10,7 @@ from ..models import Place, Route
 from ..schemas import (
     RouletteGenerateRequest,
     RouletteGenerateResponse,
+    RouletteRouteListItem,
     RouletteSaveRequest,
     RouletteSaveResponse,
     RouteItem,
@@ -208,6 +209,27 @@ def save_route(
         route_id=route.id,
         message="경로 데이터가 성공적으로 저장되었습니다.",
     )
+
+
+@router.get(
+    "",
+    response_model=list[RouletteRouteListItem],
+    summary="저장된 경로 목록 조회",
+    description="저장된 룰렛 경로의 요약 목록을 최신순으로 반환한다.",
+)
+def list_routes(
+    db: Session = Depends(get_db),
+):
+    routes = db.query(Route).order_by(Route.created_at.desc(), Route.id.desc()).all()
+
+    return [
+        RouletteRouteListItem(
+            route_id=route.id,
+            title=route.title,
+            created_at=route.created_at.isoformat() if route.created_at else "",
+        )
+        for route in routes
+    ]
 
 
 @router.post(
