@@ -2,7 +2,7 @@ import math
 import random
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
@@ -13,6 +13,7 @@ from ..schemas import (
     RouletteGenerateRequest,
     RouletteGenerateResponse,
     RouletteRouteListItem,
+    RouletteRouteListResponse,
     RouletteSaveRequest,
     RouletteSaveResponse,
     RouteItem,
@@ -50,6 +51,7 @@ NEAREST_K = 10
 # stop_count를 지정하지 않았을 때 무작위로 고르는 범위.
 MIN_STOPS = 3
 MAX_STOPS = 8
+ROUTE_LIST_PAGE_SIZE = 10
 
 # 관광공사 원본에 좌표가 (117.99, 19.69)로 채워진 결측치가 섞여 있어 한반도 남부 밖은 제외한다.
 LAT_MIN, LAT_MAX = 33.0, 38.5
@@ -215,16 +217,34 @@ def save_route(
 
 @router.get(
     "",
-    response_model=list[RouletteRouteListItem],
+    response_model=RouletteRouteListResponse,
     summary="저장된 경로 목록 조회",
-    description="저장된 룰렛 경로의 요약 목록을 최신순으로 반환한다.",
+    description="저장된 룰렛 경로 목록을 제목 부분검색과 페이지네이션(페이지당 10개)으로 반환한다.",
 )
 def list_routes(
+    page: int = Query(default=1, ge=1, description="페이지 번호(1부터 시작)"),
+    keyword: str | None = Query(default=None, description="제목 부분검색 키워드"),
     db: Session = Depends(get_db),
 ):
-    routes = db.query(Route).order_by(Route.created_at.desc(), Route.id.desc()).all()
+    query = db.query(Route)
+    if keyword:
+        search = keyword.strip()
+        if search:
+            query = query.filter(Route.title.contains(search))
 
-    return [
+    total_count = query.count()
+    total_pages = math.ceil(total_count / ROUTE_LIST_PAGE_SIZE) if total_count else 0
+
+    offset = (page - 1) * ROUTE_LIST_PAGE_SIZE
+    routes = (
+        query
+        .order_by(Route.created_at.desc(), Route.id.desc())
+        .offset(offset)
+        .limit(ROUTE_LIST_PAGE_SIZE)
+        .all()
+    )
+
+    items = [
         RouletteRouteListItem(
             route_id=route.id,
             title=route.title,
@@ -232,6 +252,15 @@ def list_routes(
         )
         for route in routes
     ]
+
+    return RouletteRouteListResponse(
+        items=items,
+        page=page,
+        page_size=ROUTE_LIST_PAGE_SIZE,
+        total_count=total_count,
+        total_pages=total_pages,
+        has_next=page < total_pages,
+    )
 
 
 @router.post(
