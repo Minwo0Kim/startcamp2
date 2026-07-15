@@ -67,12 +67,15 @@ class C_PostResponse(BaseModel):
     post_id : int
     message : str
 
-##post 전체 불러오기 response
-class R_AllPostResponse(BaseModel):
+##post 전체 불러오기용 response
+class AllPostDict(BaseModel):
     post_id : int
-    title : int
+    title : str
     route_id : int | None = None
-    created_at : str
+    created_at : datetime
+
+class R_AllPostResponse(BaseModel):
+    post_info : list[AllPostDict]
 
 ##post 상세 조회 response
 class R_PostResponse(BaseModel):
