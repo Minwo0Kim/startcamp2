@@ -32,13 +32,19 @@ PowerShell:
 pip install -r requirements.txt
 ```
 
-### 4. 서버 실행
+### 4. DB 초기화 및 데이터 적재
+
+```bash
+python init_db.py
+```
+
+### 5. 서버 실행
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-### 5. 가상환경 종료
+### 6. 가상환경 종료
 
 ```bash
 deactivate
