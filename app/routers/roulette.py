@@ -184,14 +184,14 @@ def generate_route(
 ):
     places, points = _load_places(db)
 
-    if len(places) < 2:
+    if len(places) < MIN_STOPS:
         raise HTTPException(status_code=404, detail="경로를 만들 장소 데이터가 부족합니다.")
 
     requested = payload.stop_count if payload else None
     if requested is None:
         requested = random.randint(MIN_STOPS, MAX_STOPS)
 
-    stop_count = min(requested, len(places))
+    stop_count = min(requested, len(places), MAX_STOPS)
     route = _walk_nearest(places, points, stop_count)
 
     return RouletteGenerateResponse(

@@ -6,7 +6,7 @@ class RouletteGenerateRequest(BaseModel):
     stop_count: int | None = Field(
         default=None,
         ge=3,
-        le=20,
+        le=8,
         description="경로에 포함할 장소 수. 생략하거나 null이면 3~8 중 랜덤으로 정한다.",
     )
 
